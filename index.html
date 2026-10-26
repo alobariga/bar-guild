@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#121011">
+  <title>Bar Guild — прототип</title>
+  <script src="https://telegram.org/js/telegram-web-app.js?64"></script>
+  <style>
+    :root {
+      --ink: #efe8d5;
+      --muted: #aaa394;
+      --dim: #706b65;
+      --night: #121011;
+      --night-2: #1a1718;
+      --surface: #211d1e;
+      --surface-2: #2a2425;
+      --line: rgba(239, 232, 213, .13);
+      --gold: #d9b96d;
+      --gold-soft: rgba(217, 185, 109, .13);
+      --wine: #9e3f49;
+      --moss: #71846a;
+      --lavender: #a996c9;
+      --radius: 20px;
+      --shadow: 0 18px 45px rgba(0, 0, 0, .32);
+    }
+
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--night); }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      min-height: var(--tg-viewport-stable-height, 100vh);
+      margin: 0;
+      color: var(--ink);
+      background: #000;
+      font: 15px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: .005em;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+
+    .app {
+      width: min(100%, 760px);
+      min-height: 100vh;
+      min-height: var(--tg-viewport-stable-height, 100vh);
+      margin: 0 auto;
+      padding: calc(22px + var(--tg-content-safe-area-inset-top, 0px)) 18px calc(108px + var(--tg-content-safe-area-inset-bottom, 0px));
+      position: relative;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(217,185,109,.5);
+      border-radius: 12px 12px 4px 12px;
+      background: linear-gradient(145deg, #473329, #20191a 65%);
+      color: var(--gold);
+      font-size: 20px;
+      box-shadow: inset 0 0 18px rgba(217,185,109,.12);
+    }
+    .brand-copy { display: grid; line-height: 1.05; }
+    .brand-name { font-family: Georgia, 'Times New Roman', serif; font-size: 20px; letter-spacing: .08em; }
+    .brand-sub { margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    .avatar-button, .icon-button {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: rgba(42,36,37,.7);
+      cursor: pointer;
+    }
+    .avatar-button:hover, .icon-button:hover { border-color: rgba(217,185,109,.55); }
+    .avatar-button span {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #614a3b;
+      color: #f7dcc0;
+      font-family: Georgia, serif;
+      font-weight: 700;
+    }
+
+    .screen { display: none; animation: appear .28s ease-out; }
+    .screen.active { display: block; }
+    @keyframes appear { from { opacity: .25; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .eyebrow { margin: 0 0 5px; color: var(--gold); font-size: 11px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3 { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; }
+    h1 { margin-bottom: 2px; font-size: clamp(30px, 8vw, 44px); line-height: 1; }
+    h2 { margin-bottom: 5px; font-size: 25px; line-height: 1.1; }
+    h3 { margin-bottom: 4px; font-size: 18px; }
+    .subtle { color: var(--muted); }
+    .caption { color: var(--dim); font-size: 12px; }
+    .section { margin-top: 28px; }
+    .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .section-heading h2 { margin: 0; font-size: 21px; }
+    .section-link { padding: 2px 0; color: var(--gold); border: 0; background: transparent; cursor: pointer; font-size: 13px; }
+
+    .hero {
+      overflow: hidden;
+      position: relative;
+      min-height: 235px;
+      padding: 25px;
+      border: 1px solid rgba(217,185,109,.22);
+      border-radius: 26px;
+      background:
+        linear-gradient(110deg, rgba(25,21,22,.98) 37%, rgba(43,32,33,.8)),
+        #241b1c;
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .hero::after {
+      content: "✦";
+      position: absolute;
+      right: -22px;
+      bottom: -65px;
+      color: rgba(217,185,109,.12);
+      font: 260px/1 Georgia, serif;
+      transform: rotate(-12deg);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 61%; }
+    .hero-class { color: var(--muted); font-size: 14px; }
+    .level-row { display: flex; gap: 11px; align-items: center; margin: 17px 0 9px; }
+    .level-seal {
+      display: grid;
+      place-items: center;
+      width: 49px;
+      height: 49px;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      background: #392c25;
+      color: var(--gold);
+      font-family: Georgia, serif;
+      font-size: 22px;
+    }
+    .level-copy { display: grid; }
+    .level-label { color: var(--muted); font-size: 12px; }
+    .level-name { font-size: 16px; font-weight: 700; }
+    .xp-line { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .meter { width: 100%; height: 7px; overflow: hidden; border-radius: 999px; background: rgba(239,232,213,.11); }
+    .meter > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--gold), #e9cf8c); box-shadow: 0 0 12px rgba(217,185,109,.5); transition: width .35s ease; }
+    .hero .meter { margin-top: 7px; }
+    .character {
+      position: absolute;
+      z-index: 1;
+      right: 9px;
+      bottom: -8px;
+      width: min(44vw, 290px);
+      height: 239px;
+      pointer-events: none;
+    }
+    .character .halo { position: absolute; right: 18px; top: 7px; width: 175px; height: 175px; border-radius: 50%; background: radial-gradient(circle, rgba(171,97,72,.3), rgba(110,52,52,.06) 53%, transparent 70%); }
+    .character .head { position: absolute; right: 74px; top: 46px; width: 73px; height: 82px; border-radius: 44px 42px 37px 39px; background: linear-gradient(90deg, #c9926f, #e0b08b 54%, #a66a59); box-shadow: inset -10px -2px 0 rgba(70,31,34,.2); }
+    .character .hair { position: absolute; right: 70px; top: 32px; width: 85px; height: 68px; border-radius: 55px 50px 20px 20px; background: #261a1d; transform: rotate(-8deg); }
+    .character .eye { position: absolute; top: 82px; z-index: 2; width: 6px; height: 6px; border-radius: 50%; background: #402728; box-shadow: 31px 0 0 #402728; }
+    .character .eye.one { right: 113px; }
+    .character .neck { position: absolute; right: 90px; top: 116px; width: 39px; height: 36px; background: #c48a6b; }
+    .character .coat { position: absolute; right: 31px; top: 130px; width: 163px; height: 120px; border-radius: 70px 65px 9px 9px; background: linear-gradient(100deg, #532c32, #2b1b22 50%, #693a3e); clip-path: polygon(18% 0, 47% 14%, 70% 0, 100% 100%, 0 100%); }
+    .character .shirt { position: absolute; right: 90px; top: 136px; width: 38px; height: 80px; background: #e0d7c2; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+    .character .arm { position: absolute; right: 19px; top: 157px; width: 64px; height: 28px; border-radius: 18px; background: #5e353a; transform: rotate(-25deg); }
+    .character .glass { position: absolute; right: 0; top: 131px; width: 25px; height: 42px; border: 2px solid rgba(240,225,196,.75); border-top: 0; border-radius: 3px 3px 12px 12px; transform: rotate(-14deg); }
+    .character .glass::after { content: ""; position: absolute; bottom: 0; left: 3px; width: 15px; height: 15px; border-radius: 0 0 8px 8px; background: rgba(163,52,47,.7); }
+
+    .bar-scene { position: absolute; inset: 0 0 0 auto; z-index: 0; width: 57%; overflow: hidden; border-radius: 0 25px 25px 0; background: linear-gradient(90deg, rgba(19, 15, 15, .82) 0%, rgba(19, 15, 15, .08) 43%, rgba(19, 15, 15, .18) 100%), url("assets/bar-scene.png") 62% 51% / cover no-repeat; -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 26%, #000 100%); mask-image: linear-gradient(90deg, transparent 0%, #000 26%, #000 100%); }
+    .bar-scene::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .05), rgba(0, 0, 0, .35)); }
+    .bar-person { position: absolute; z-index: 2; right: 3%; bottom: -14%; height: 118%; width: auto; max-width: 42%; object-fit: contain; object-position: center bottom; filter: drop-shadow(-8px 12px 16px rgba(0, 0, 0, .52)); pointer-events: none; user-select: none; }
+    #today .hero { min-height: 510px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+    #today .hero::after { display: none; }
+    .hero-scene { position: absolute; inset: 0; z-index: 0; background: url("assets/bar-hero.png") 50% 45% / cover no-repeat; }
+    .hero-scene::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, .84) 26%, rgba(0, 0, 0, .2) 63%, rgba(0, 0, 0, .54) 100%), linear-gradient(0deg, rgba(0, 0, 0, .83) 0%, transparent 42%); }
+    #today .hero-content { position: absolute; z-index: 2; inset: 0 auto 0 0; display: flex; flex-direction: column; justify-content: space-between; width: 57%; max-width: none; padding: 30px 0 32px; }
+    .hero-identity { max-width: 370px; }
+    .hero-identity .eyebrow { margin-bottom: 8px; text-shadow: 0 2px 12px rgba(0, 0, 0, .85); }
+    .hero-identity h1 { margin: 0; color: #f5edda; font-size: clamp(42px, 6vw, 61px); line-height: .94; text-shadow: 0 3px 18px rgba(0, 0, 0, .88); }
+    #today .hero-class { margin: 12px 0 0; color: #c9c1b3; font-size: 15px; text-shadow: 0 2px 11px rgba(0, 0, 0, .9); }
+    .hero-level { max-width: 400px; }
+    #today .level-row { gap: 12px; margin: 0 0 9px; }
+    #today .level-seal { width: 44px; height: 44px; border: 0; border-radius: 0; background: transparent; color: var(--gold); font-size: 31px; text-shadow: 0 2px 12px rgba(0,0,0,.9); }
+    #today .level-label { color: #c9c1b3; font-size: 12px; text-shadow: 0 2px 11px rgba(0,0,0,.9); }
+    #today .level-name { color: #f5edda; font-size: 18px; text-shadow: 0 2px 11px rgba(0,0,0,.9); }
+    #today .hero-level .meter { max-width: 330px; height: 8px; background: rgba(244, 237, 218, .2); }
+    .hero-facts { position: absolute; z-index: 2; top: 50%; right: 0; display: grid; gap: 18px; transform: translateY(-50%); text-align: right; }
+    .hero-fact { display: grid; gap: 1px; text-shadow: 0 2px 13px rgba(0, 0, 0, .95); }
+    .hero-fact strong { color: #f5edda; font: 31px/1 Georgia, serif; }
+    .hero-fact span { color: #c9c1b3; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .status-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 12px; }
+    .status-card { padding: 12px 10px; border: 1px solid var(--line); border-radius: 15px; background: rgba(33,29,30,.72); }
+    .status-value { display: block; font-family: Georgia, serif; font-size: 21px; line-height: 1; }
+    .status-label { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+
+    .quest-card, .reward-card, .guild-card, .manager-card, .mission-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, rgba(42,36,37,.94), rgba(27,24,25,.95));
+      box-shadow: 0 12px 25px rgba(0,0,0,.16);
+    }
+    .quest-card { padding: 16px; }
+    .quest-head, .reward-head, .mission-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .quest-type, .tag { display: inline-flex; align-items: center; gap: 5px; color: var(--gold); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .tag { padding: 4px 8px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); letter-spacing: .06em; }
+    .tag.wine { color: #df8d96; background: rgba(158,63,73,.17); }
+    .tag.moss { color: #b9c9a9; background: rgba(113,132,106,.18); }
+    .quest-title { margin: 5px 0 3px; font-size: 18px; }
+    .quest-points { flex: none; padding: 6px 8px; border-radius: 9px; background: rgba(217,185,109,.09); color: #e9cf8c; font-size: 12px; font-weight: 700; }
+    .quest-foot { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-top: 13px; color: var(--muted); font-size: 12px; }
+    .chevron { color: var(--gold); font-size: 19px; line-height: 1; }
+
+    .checklist { overflow: hidden; }
+    .check-item { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 11px 2px; border-bottom: 1px solid var(--line); cursor: pointer; }
+    .check-item:last-child { border-bottom: 0; }
+    .check-item input { position: absolute; opacity: 0; pointer-events: none; }
+    .checkmark { display: grid; place-items: center; flex: none; width: 22px; height: 22px; border: 1px solid rgba(239,232,213,.32); border-radius: 7px; color: transparent; }
+    .check-item input:checked + .checkmark { border-color: var(--gold); background: var(--gold); color: #271f18; }
+    .check-copy { flex: 1; }
+    .check-copy strong { display: block; font-weight: 600; }
+    .check-copy small { color: var(--muted); }
+    .check-item input:checked ~ .check-copy { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(217,185,109,.55); }
+    .check-xp { color: var(--gold); font-size: 12px; font-weight: 700; }
+    .checklist-summary { display: flex; align-items: center; gap: 10px; margin-top: 13px; }
+    .checklist-summary .meter { flex: 1; }
+    .checklist-summary span { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+    .button {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 15px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: #342d2c;
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .button:hover { filter: brightness(1.12); }
+    .button:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+    .button.primary { background: linear-gradient(135deg, #c99e53, #e0c075); color: #241c17; box-shadow: 0 6px 16px rgba(201,158,83,.22); }
+    .button.outline { border-color: rgba(217,185,109,.45); background: transparent; color: var(--gold); }
+    .button.small { min-height: 36px; padding: 8px 11px; font-size: 12px; }
+    .wide { width: 100%; }
+
+    .bottom-nav {
+      position: fixed;
+      z-index: 10;
+      bottom: 0;
+      left: 50%;
+      display: flex;
+      width: min(100%, 760px);
+      padding: 10px 11px calc(10px + max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)));
+      transform: translateX(-50%);
+      border-top: 1px solid var(--line);
+      background: rgba(20,17,18,.92);
+      backdrop-filter: blur(17px);
+    }
+    .nav-button { flex: 1; display: grid; place-items: center; gap: 2px; min-height: 48px; padding: 4px; border: 0; border-radius: 12px; color: var(--muted); background: transparent; cursor: pointer; font-size: 10px; }
+    .nav-button .nav-icon { font-size: 19px; line-height: 1; }
+    .nav-button.active { color: var(--gold); background: rgba(217,185,109,.1); }
+
+    .page-intro { margin: 4px 0 24px; }
+    .tabs { display: flex; gap: 7px; margin-bottom: 17px; overflow-x: auto; padding-bottom: 1px; }
+    .tab { flex: none; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; }
+    .tab.active { border-color: rgba(217,185,109,.6); background: var(--gold-soft); color: var(--gold); }
+    .mission-stack, .reward-stack, .guild-stack { display: grid; gap: 11px; }
+    .mission-card { padding: 16px; }
+    .mission-card p { margin: 8px 0 12px; color: var(--muted); }
+    .mission-info { display: flex; gap: 12px; color: var(--muted); font-size: 12px; }
+    .mission-info b { color: var(--ink); }
+    .mission-card.locked { opacity: .6; }
+    .mission-card.done { border-color: rgba(113,132,106,.6); }
+    .mission-card.done .tag { color: #b9c9a9; background: rgba(113,132,106,.18); }
+
+    .reward-card { display: grid; grid-template-columns: 72px 1fr auto; align-items: center; gap: 14px; padding: 14px; }
+    .reward-art { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 16px; background: radial-gradient(circle at 30% 23%, #6d5130, #2c2320 64%); font-size: 31px; }
+    .reward-art.merch { background: radial-gradient(circle at 30% 23%, #6a3540, #261d20 64%); }
+    .reward-art.travel { background: radial-gradient(circle at 30% 23%, #4f625b, #202724 64%); }
+    .reward-card h3 { margin-bottom: 3px; }
+    .reward-card p { margin: 0; color: var(--muted); font-size: 12px; }
+    .cost { margin-top: 6px !important; color: var(--gold) !important; font-weight: 700; }
+    .reward-card .button { align-self: end; }
+    .currency-bar { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin: 0 0 17px; padding: 13px 16px; border: 1px solid rgba(217,185,109,.22); border-radius: 16px; background: linear-gradient(90deg, rgba(217,185,109,.12), rgba(217,185,109,.04)); }
+    .currency-bar b { color: var(--gold); font-size: 19px; }
+
+    .guild-hero { padding: 20px; border-radius: 22px; background: linear-gradient(115deg, rgba(82,40,47,.85), rgba(31,25,26,.96)); border: 1px solid rgba(158,63,73,.5); }
+    .guild-hero h2 { margin-bottom: 4px; }
+    .guild-hero p { margin: 0; color: #cfb5b2; }
+    .guild-progress { display: flex; gap: 9px; align-items: center; margin-top: 16px; }
+    .guild-progress .meter { flex: 1; }
+    .guild-progress .meter > span { background: linear-gradient(90deg, #c56b72, #e6a299); }
+    .guild-progress span { font-size: 12px; color: #e0b4ac; white-space: nowrap; }
+    .member { display: grid; grid-template-columns: 43px 1fr auto; align-items: center; gap: 11px; padding: 4px 0; }
+    .member-badge { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 50%; background: #382d2c; color: var(--gold); font-family: Georgia, serif; }
+    .member-name { font-weight: 700; }
+    .member-role { color: var(--muted); font-size: 12px; }
+    .member-xp { text-align: right; color: var(--gold); font-size: 12px; font-weight: 700; }
+
+    .manager-card { padding: 16px; margin-bottom: 11px; }
+    .manager-card p { color: var(--muted); }
+    .manager-card .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .manager-list { display: grid; gap: 8px; }
+    .approval { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+    .approval:first-child { border-top: 0; }
+    .approval strong { display: block; font-size: 14px; }
+    .approval small { color: var(--muted); }
+    .notice { margin-bottom: 15px; padding: 11px 13px; border-left: 2px solid var(--gold); background: rgba(217,185,109,.09); color: #ded0ae; font-size: 13px; }
+    .modal-backdrop { display: none; align-items: end; justify-content: center; position: fixed; z-index: 30; inset: 0; padding: 16px; background: rgba(0,0,0,.66); }
+    .modal-backdrop.show { display: flex; }
+    .modal { width: min(100%, 500px); padding: 22px; border: 1px solid rgba(217,185,109,.3); border-radius: 23px; background: #211d1e; box-shadow: var(--shadow); animation: rise .2s ease; }
+    @keyframes rise { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .modal h2 { margin-bottom: 7px; }
+    .modal p { color: var(--muted); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+    #manager > .page-intro, #manager > .notice, #manager > .manager-card { display: none; }
+    .admin-shell { padding-bottom: 8px; }
+    .admin-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin: 4px 0 20px; }
+    .admin-head h1 { margin-bottom: 4px; }
+    .admin-status { flex: none; padding: 7px 10px; border: 1px solid rgba(113,132,106,.48); border-radius: 999px; color: #bbcca9; background: rgba(113,132,106,.12); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .admin-tabs { display: flex; gap: 7px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 2px; }
+    .admin-tab { flex: none; padding: 9px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: transparent; cursor: pointer; font-size: 13px; }
+    .admin-tab:hover { border-color: rgba(217,185,109,.45); color: var(--ink); }
+    .admin-tab.active { border-color: rgba(217,185,109,.65); background: var(--gold-soft); color: var(--gold); }
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; animation: appear .24s ease-out; }
+    .admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 11px; }
+    .admin-stat { padding: 13px 12px; border: 1px solid var(--line); border-radius: 15px; background: linear-gradient(145deg, rgba(42,36,37,.94), rgba(27,24,25,.95)); }
+    .admin-stat label { display: block; color: var(--muted); font-size: 11px; }
+    .admin-stat strong { display: block; margin-top: 5px; color: var(--gold); font: 23px/1 Georgia, serif; }
+    .admin-card { padding: 17px; border: 1px solid var(--line); border-radius: 19px; background: linear-gradient(145deg, rgba(42,36,37,.94), rgba(27,24,25,.95)); box-shadow: 0 12px 25px rgba(0,0,0,.16); }
+    .admin-card + .admin-card { margin-top: 11px; }
+    .admin-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    .admin-card-head h2 { margin: 0; font-size: 21px; }
+    .admin-card-head p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+    .admin-form { display: grid; gap: 12px; }
+    .admin-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .admin-field { display: grid; gap: 6px; }
+    .admin-field.full { grid-column: 1 / -1; }
+    .admin-field label { color: var(--muted); font-size: 12px; }
+    .admin-field input, .admin-field select, .admin-field textarea { width: 100%; border: 1px solid rgba(239,232,213,.16); border-radius: 10px; padding: 10px 11px; color: var(--ink); background: rgba(12,11,11,.58); outline: none; }
+    .admin-field input:focus, .admin-field select:focus, .admin-field textarea:focus { border-color: rgba(217,185,109,.75); box-shadow: 0 0 0 3px rgba(217,185,109,.1); }
+    .admin-field textarea { min-height: 76px; resize: vertical; }
+    .admin-action-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .admin-entry { padding: 13px 0; border-top: 1px solid var(--line); }
+    .admin-entry:first-child { padding-top: 0; border-top: 0; }
+    .admin-entry h3 { margin: 0; font-size: 17px; }
+    .admin-entry p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+    .admin-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 9px; color: var(--gold); font-size: 12px; font-weight: 700; }
+    .admin-task-list { display: grid; gap: 7px; margin: 10px 0 0; padding: 0; list-style: none; }
+    .admin-task-list li { padding-left: 17px; position: relative; color: var(--muted); font-size: 13px; }
+    .admin-task-list li::before { content: "✦"; position: absolute; left: 0; color: var(--gold); }
+    .admin-queue { display: grid; gap: 2px; }
+    .admin-queue-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); }
+    .admin-queue-row + .admin-queue-row { border-top: 1px solid var(--line); }
+    .admin-empty { margin: 0; color: var(--muted); font-size: 13px; }
+    .admin-form .button { justify-self: start; }
+    .toast { position: fixed; z-index: 40; left: 50%; bottom: 88px; display: none; width: min(calc(100% - 32px), 470px); padding: 13px 16px; transform: translateX(-50%); border: 1px solid rgba(113,132,106,.55); border-radius: 13px; background: #293028; color: #e3ecd5; box-shadow: var(--shadow); }
+    .toast.show { display: block; animation: appear .25s ease; }
+
+    @media (max-width: 480px) {
+      .app { padding: calc(18px + var(--tg-content-safe-area-inset-top, 0px)) 14px calc(104px + var(--tg-content-safe-area-inset-bottom, 0px)); }
+      .hero { padding: 21px; min-height: 248px; }
+      .hero-content { max-width: 66%; }
+      .bar-scene { width: 70%; }
+      .bar-person { right: -3%; bottom: -10%; height: 108%; max-width: 50%; }
+      #today .hero { min-height: 520px; }
+      #today .hero-content { width: 68%; padding: 25px 0 24px; }
+      .hero-identity h1 { font-size: 43px; }
+      .hero-facts { top: auto; right: 0; bottom: 24px; gap: 12px; transform: none; }
+      .hero-fact strong { font-size: 25px; }
+      .admin-head { align-items: flex-start; }
+      .admin-status { padding: 6px 8px; font-size: 10px; }
+      .admin-fields { grid-template-columns: 1fr; }
+      .admin-field.full { grid-column: auto; }
+      .status-row { gap: 6px; }
+      .status-card { padding: 10px 8px; }
+      .reward-card { grid-template-columns: 58px 1fr; gap: 11px; }
+      .reward-art { width: 58px; height: 58px; font-size: 26px; }
+      .reward-card .button { grid-column: 2; justify-self: start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand" aria-label="Bar Guild">
+        <div class="brand-mark">♜</div>
+        <div class="brand-copy"><span class="brand-name">BAR GUILD</span><span class="brand-sub">Орден ночной смены</span></div>
+      </div>
+      <button class="avatar-button" type="button" aria-label="Профиль"><span id="avatar-initial">М</span></button>
+    </header>
+
+    <section id="today" class="screen active" aria-labelledby="today-title">
+      <div class="hero">
+        <div class="hero-scene" aria-hidden="true"></div>
+        <div class="hero-content">
+          <div class="hero-identity">
+            <p class="eyebrow">Гильдия «Полночь»</p>
+            <h1 id="today-title">Марк</h1>
+            <p class="hero-class">Ученик миксологии · Ранг II</p>
+          </div>
+          <div class="hero-level">
+            <div class="level-row"><div class="level-seal" aria-label="Уровень 8">8</div><div class="level-copy"><span class="level-label">До звания «Хранитель бара»</span><span class="level-name"><span id="xp-current">460</span> / 650 опыта</span></div></div>
+            <div class="meter" aria-label="Прогресс уровня"><span id="xp-meter" style="width:71%"></span></div>
+          </div>
+        </div>
+        <div class="hero-facts" aria-label="Статус бармена">
+          <div class="hero-fact"><strong>4</strong><span>смены подряд</span></div>
+          <div class="hero-fact"><strong id="token-count">7</strong><span>печати гильдии</span></div>
+          <div class="hero-fact"><strong>3</strong><span>миссии сегодня</span></div>
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="section-heading"><h2>Главная миссия</h2><button class="section-link" data-nav="missions">Все миссии</button></div>
+        <article class="quest-card">
+          <div class="quest-head"><div><span class="quest-type">☽ Недельное испытание</span><h3 class="quest-title">Язык гостя</h3></div><span class="quest-points">+120 XP</span></div>
+          <p class="subtle">Запомни и презентуй три позиции из нового меню.</p>
+          <div class="quest-foot"><span>Осталось 4 дня</span><span class="chevron">→</span></div>
+        </article>
+      </section>
+
+      <section class="section">
+        <div class="section-heading"><h2>Ритуал смены</h2><span class="caption" id="check-count">0 из 4</span></div>
+        <div class="checklist" id="checklist">
+          <label class="check-item"><input type="checkbox" data-xp="10"><span class="checkmark">✓</span><span class="check-copy"><strong>Подготовить станцию</strong><small>Инвентарь, лёд, гарниры</small></span><span class="check-xp">+10</span></label>
+          <label class="check-item"><input type="checkbox" data-xp="10"><span class="checkmark">✓</span><span class="check-copy"><strong>Проверить стоп-лист</strong><small>Меню и заготовки</small></span><span class="check-xp">+10</span></label>
+          <label class="check-item"><input type="checkbox" data-xp="15"><span class="checkmark">✓</span><span class="check-copy"><strong>Провести сервис по стандарту</strong><small>Подтверждается менеджером</small></span><span class="check-xp">+15</span></label>
+          <label class="check-item"><input type="checkbox" data-xp="15"><span class="checkmark">✓</span><span class="check-copy"><strong>Закрыть бар без замечаний</strong><small>Чистота и сдача смены</small></span><span class="check-xp">+15</span></label>
+        </div>
+        <div class="checklist-summary"><div class="meter"><span id="check-meter" style="width:0%"></span></div><span id="check-reward">награда: кофе</span></div>
+        <button class="button primary wide" id="complete-shift" type="button" disabled style="margin-top:14px">Передать смену на проверку</button>
+      </section>
+    </section>
+
+    <section id="missions" class="screen" aria-labelledby="missions-title">
+      <div class="page-intro"><p class="eyebrow">Путь мастера</p><h1 id="missions-title">Миссии</h1><p class="subtle">Задания, которые превращают смены в историю роста.</p></div>
+      <div class="tabs" role="tablist" aria-label="Тип миссий">
+        <button class="tab active" type="button" data-filter="all">Все</button><button class="tab" type="button" data-filter="daily">Сегодня</button><button class="tab" type="button" data-filter="weekly">Неделя</button><button class="tab" type="button" data-filter="story">Путь гильдии</button>
+      </div>
+      <div class="mission-stack" id="missions-list">
+        <article class="mission-card" data-type="daily"><div class="mission-head"><div><span class="tag">Сегодня</span><h3>Ритуал смены</h3></div><strong class="quest-points">+50 XP</strong></div><p>Пройди все четыре пункта чек-листа и отправь смену на проверку.</p><div class="mission-info"><span>⌛ До конца смены</span><span>◈ <b id="mission-progress">0/4</b></span></div></article>
+        <article class="mission-card" data-type="weekly"><div class="mission-head"><div><span class="tag wine">Недельное испытание</span><h3>Язык гостя</h3></div><strong class="quest-points">+120 XP</strong></div><p>Выучи вкусовой профиль и подачу трёх напитков из нового меню. Покажи их менеджеру.</p><div class="mission-info"><span>⌛ 4 дня</span><span>◈ 1/3</span></div></article>
+        <article class="mission-card" data-type="story"><div class="mission-head"><div><span class="tag moss">Путь гильдии</span><h3>Печать наставника</h3></div><strong class="quest-points">+250 XP</strong></div><p>Подготовь младшего бармена к первой самостоятельной смене.</p><div class="mission-info"><span>⌛ До 31 октября</span><span>◈ 0/1</span></div></article>
+        <article class="mission-card locked" data-type="story"><div class="mission-head"><div><span class="tag">Заблокировано</span><h3>Чёрный свиток</h3></div><strong class="quest-points">Ранг III</strong></div><p>Станет доступно после достижения следующего звания.</p></article>
+      </div>
+    </section>
+
+    <section id="guild" class="screen" aria-labelledby="guild-title">
+      <div class="page-intro"><p class="eyebrow">Ваш дом</p><h1 id="guild-title">Гильдия</h1><p class="subtle">Один бар. Один ритуал. Одна сильная команда.</p></div>
+      <div class="guild-hero"><span class="tag wine">Командный рейд</span><h2 style="margin-top:9px">Осенняя инвентаризация</h2><p>Пройдите ежемесячную проверку склада без расхождений.</p><div class="guild-progress"><div class="meter"><span style="width:63%"></span></div><span>63 / 100</span></div></div>
+      <section class="section"><div class="section-heading"><h2>Рейтинг недели</h2><span class="caption">по опыту</span></div><div class="guild-card" style="padding:13px 16px"><div class="guild-stack">
+        <div class="member"><div class="member-badge">12</div><div><div class="member-name">Алина</div><div class="member-role">Хранитель бара</div></div><div class="member-xp">780 XP</div></div>
+        <div class="member"><div class="member-badge">8</div><div><div class="member-name">Марк <span class="tag" style="vertical-align:middle">ты</span></div><div class="member-role">Ученик миксологии</div></div><div class="member-xp">460 XP</div></div>
+        <div class="member"><div class="member-badge">6</div><div><div class="member-name">Лея</div><div class="member-role">Ученик миксологии</div></div><div class="member-xp">330 XP</div></div>
+        <div class="member"><div class="member-badge">5</div><div><div class="member-name">Илья</div><div class="member-role">Подмастерье бара</div></div><div class="member-xp">290 XP</div></div>
+      </div></div></section>
+      <section class="section"><div class="section-heading"><h2>Клятвы гильдии</h2></div><article class="quest-card"><span class="quest-type">✦ Открыто</span><h3 class="quest-title">Безупречная неделя</h3><p class="subtle">Каждый член команды завершил минимум четыре смены по стандарту.</p><div class="quest-foot"><span>Награда: общий ужин команды</span><span class="chevron">→</span></div></article></section>
+    </section>
+
+    <section id="rewards" class="screen" aria-labelledby="rewards-title">
+      <div class="page-intro"><p class="eyebrow">Печати гильдии</p><h1 id="rewards-title">Награды</h1><p class="subtle">Твоя работа открывает реальные привилегии.</p></div>
+      <div class="currency-bar"><span>Твой баланс</span><b><span id="token-count-2">7</span> ✦</b></div>
+      <div class="reward-stack">
+        <article class="reward-card"><div class="reward-art">☕</div><div><h3>Кофе от гильдии</h3><p>Любой кофе из меню заведения.</p><p class="cost">5 печатей</p></div><button class="button primary small reward-button" type="button" data-cost="5" data-reward="Кофе от гильдии">Взять</button></article>
+        <article class="reward-card"><div class="reward-art merch">♜</div><div><h3>Футболка гильдии</h3><p>Лимитированный мерч команды.</p><p class="cost">28 печатей</p></div><button class="button outline small reward-button" type="button" data-cost="28" data-reward="Футболка гильдии">28 ✦</button></article>
+        <article class="reward-card"><div class="reward-art travel">✦</div><div><h3>Стажировка у союзников</h3><p>Смена в другом заведении сети.</p><p class="cost">90 печатей + выбор менеджера</p></div><button class="button outline small reward-button" type="button" data-cost="90" data-reward="Стажировка у союзников">90 ✦</button></article>
+      </div>
+    </section>
+
+    <section id="manager" class="screen" aria-labelledby="manager-title">
+      <div class="page-intro"><p class="eyebrow">Режим мастера</p><h1 id="manager-title">Управление</h1><p class="subtle">Короткая панель для бар-менеджера.</p></div>
+      <div class="notice">В реальном запуске сюда попадают только пользователи с ролью бар-менеджера. Здесь — демонстрационный режим.</div>
+      <article class="manager-card"><div class="row"><div><span class="tag">Сегодня</span><h3 style="margin-top:8px">Смены ждут проверки</h3></div><strong style="font: 28px Georgia,serif;color:var(--gold)">2</strong></div><div class="manager-list" style="margin-top:14px">
+        <div class="approval" data-approval="Мария"><div><strong>Мария · Вечерняя смена</strong><small>Чек-лист: 4/4 · +50 XP</small></div><button class="button small primary approve" type="button">Принять</button></div>
+        <div class="approval" data-approval="Илья"><div><strong>Илья · Дневная смена</strong><small>Чек-лист: 4/4 · +50 XP</small></div><button class="button small primary approve" type="button">Принять</button></div>
+      </div></article>
+      <article class="manager-card"><div class="row"><div><span class="tag wine">Команда</span><h3 style="margin-top:8px">Новая миссия</h3><p style="margin-bottom:0">Создай понятное испытание на неделю или месяц.</p></div><button class="button outline" type="button" id="new-mission">Создать</button></div></article>
+      <article class="manager-card"><span class="tag moss">Рекомендация</span><h3 style="margin-top:8px">Поддержи первые победы</h3><p style="margin-bottom:0">В пилоте подтверждай задания быстро: связь между действием и наградой должна ощущаться в ту же смену.</p></article>
+
+      <div class="admin-shell">
+        <div class="admin-head"><div><p class="eyebrow">Консоль гильдии</p><h1>Админ-панель</h1><p class="subtle">Настраивай рост команды и сразу выдавай награды.</p></div><span class="admin-status">● система активна</span></div>
+        <div class="admin-tabs" role="tablist" aria-label="Разделы админ-панели">
+          <button class="admin-tab active" type="button" data-admin-target="admin-overview">Обзор</button>
+          <button class="admin-tab" type="button" data-admin-target="admin-missions">Миссии</button>
+          <button class="admin-tab" type="button" data-admin-target="admin-checklists">Чек-листы</button>
+          <button class="admin-tab" type="button" data-admin-target="admin-rewards">Награды</button>
+        </div>
+
+        <section class="admin-panel active" id="admin-overview">
+          <div class="admin-stats"><div class="admin-stat"><label>На проверке</label><strong id="admin-awaiting-count">2</strong></div><div class="admin-stat"><label>Миссий активно</label><strong id="admin-mission-count">3</strong></div><div class="admin-stat"><label>Выдано сегодня</label><strong id="admin-grant-count">14</strong></div></div>
+          <article class="admin-card"><div class="admin-card-head"><div><h2>Проверка смен</h2><p>Подтвердить выполнение и начислить награды.</p></div><span class="tag">сегодня</span></div><div class="admin-queue" id="admin-approvals"><div class="admin-queue-row" data-worker="Мария"><div><strong>Мария · Вечерняя смена</strong><div class="caption">Чек-лист 4/4 · +50 XP · 1 печать</div></div><button class="button primary small admin-approve" type="button">Принять</button></div><div class="admin-queue-row" data-worker="Илья"><div><strong>Илья · Дневная смена</strong><div class="caption">Чек-лист 4/4 · +50 XP · 1 печать</div></div><button class="button primary small admin-approve" type="button">Принять</button></div></div></article>
+        </section>
+
+        <section class="admin-panel" id="admin-missions">
+          <article class="admin-card"><div class="admin-card-head"><div><h2>Создать миссию</h2><p>Выбери понятное действие, срок и награду.</p></div><span class="tag wine">новая</span></div><form class="admin-form" id="mission-form"><div class="admin-fields"><div class="admin-field full"><label for="mission-name">Название</label><input id="mission-name" name="name" required placeholder="Например, Язык гостя"></div><div class="admin-field"><label for="mission-type">Тип</label><select id="mission-type" name="type"><option>Ежедневная</option><option>Недельная</option><option>Командная</option><option>Путь гильдии</option></select></div><div class="admin-field"><label for="mission-xp">Опыт</label><input id="mission-xp" name="xp" type="number" min="0" value="50"></div><div class="admin-field"><label for="mission-seals">Печати</label><input id="mission-seals" name="seals" type="number" min="0" value="1"></div><div class="admin-field"><label for="mission-deadline">Срок</label><input id="mission-deadline" name="deadline" type="date"></div></div><div class="admin-field"><label for="mission-description">Условие выполнения</label><textarea id="mission-description" name="description" required placeholder="Что нужно сделать и как менеджер проверит результат?"></textarea></div><div class="admin-action-row"><span class="caption">После создания миссия появится у команды.</span><button class="button primary" type="submit">Создать миссию</button></div></form></article>
+          <article class="admin-card"><div class="admin-card-head"><div><h2>Активные миссии</h2><p>Можно менять в следующей версии с серверной базой.</p></div></div><div id="admin-missions-list"><article class="admin-entry"><span class="tag wine">Недельная</span><h3>Язык гостя</h3><p>Презентовать три позиции из нового меню.</p><div class="admin-meta">+120 XP · 3 печати · до 15 октября</div></article></div></article>
+        </section>
+
+        <section class="admin-panel" id="admin-checklists">
+          <article class="admin-card"><div class="admin-card-head"><div><h2>Создать чек-лист</h2><p>Ритуалы для открытия, сервиса или закрытия смены.</p></div><span class="tag moss">шаблон</span></div><form class="admin-form" id="checklist-form"><div class="admin-fields"><div class="admin-field full"><label for="checklist-name">Название</label><input id="checklist-name" name="name" required placeholder="Например, Открытие бара"></div><div class="admin-field full"><label for="checklist-shift">Когда показывать</label><select id="checklist-shift" name="shift"><option>Перед сменой</option><option>Во время смены</option><option>При закрытии</option></select></div></div><div class="admin-field"><label>Пункты</label><div class="admin-form" id="checklist-items"><input name="task" required placeholder="Первый пункт"><input name="task" required placeholder="Второй пункт"></div></div><div class="admin-action-row"><button class="button outline small" type="button" id="add-check-item">+ Добавить пункт</button><button class="button primary" type="submit">Сохранить чек-лист</button></div></form></article>
+          <article class="admin-card"><div class="admin-card-head"><div><h2>Сохранённые чек-листы</h2><p>Готовые ритуалы для команды.</p></div></div><div id="admin-checklist-list"><article class="admin-entry"><span class="tag">Перед сменой</span><h3>Открытие бара</h3><ul class="admin-task-list"><li>Подготовить станцию</li><li>Проверить стоп-лист</li><li>Открыть кассу</li></ul></article></div></article>
+        </section>
+
+        <section class="admin-panel" id="admin-rewards">
+          <article class="admin-card"><div class="admin-card-head"><div><h2>Вид награды</h2><p>Создай привилегию, на которую команда сможет копить.</p></div><span class="tag">каталог</span></div><form class="admin-form" id="reward-form"><div class="admin-fields"><div class="admin-field full"><label for="reward-name">Название</label><input id="reward-name" name="name" required placeholder="Например, Кофе от гильдии"></div><div class="admin-field"><label for="reward-category">Категория</label><select id="reward-category" name="category"><option>Еда и напитки</option><option>Мерч</option><option>Обучение</option><option>Привилегия</option></select></div><div class="admin-field"><label for="reward-cost">Цена в печатях</label><input id="reward-cost" name="cost" type="number" min="1" value="5"></div></div><div class="admin-field"><label for="reward-description">Описание</label><textarea id="reward-description" name="description" required placeholder="Что получает сотрудник и как её забрать?"></textarea></div><button class="button primary" type="submit">Добавить награду</button></form></article>
+          <article class="admin-card"><div class="admin-card-head"><div><h2>Каталог наград</h2><p>Доступные привилегии для витрины гильдии.</p></div></div><div id="admin-reward-list"><article class="admin-entry"><span class="tag">Еда и напитки</span><h3>Кофе от гильдии</h3><p>Любой кофе из меню заведения.</p><div class="admin-meta">5 печатей</div></article></div></article>
+          <article class="admin-card"><div class="admin-card-head"><div><h2>Начислить награду</h2><p>Выдай опыт, печати или готовую привилегию вручную.</p></div><span class="tag wine">выдача</span></div><form class="admin-form" id="grant-form"><div class="admin-fields"><div class="admin-field"><label for="grant-worker">Сотрудник</label><select id="grant-worker" name="worker"><option>Марк</option><option>Алина</option><option>Мария</option><option>Илья</option></select></div><div class="admin-field"><label for="grant-kind">Начисление</label><select id="grant-kind" name="kind"><option value="опыта">Опыт</option><option value="печатей">Печати</option><option value="награда">Готовая награда</option></select></div><div class="admin-field full"><label for="grant-amount">Количество / название</label><input id="grant-amount" name="amount" required value="25"></div></div><button class="button primary" type="submit">Начислить</button></form></article>
+          <article class="admin-card"><div class="admin-card-head"><div><h2>История начислений</h2><p>Последние действия менеджеров.</p></div></div><div id="grant-history"><article class="admin-entry"><h3>Алина · +1 печать</h3><p>За помощь с обучением стажёра.</p><div class="admin-meta">Сегодня, 18:40</div></article></div></article>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Основная навигация">
+    <button class="nav-button active" type="button" data-nav="today"><span class="nav-icon">☽</span><span>Главная</span></button>
+    <button class="nav-button" type="button" data-nav="missions"><span class="nav-icon">✦</span><span>Миссии</span></button>
+    <button class="nav-button" type="button" data-nav="guild"><span class="nav-icon">♜</span><span>Гильдия</span></button>
+    <button class="nav-button" type="button" data-nav="rewards"><span class="nav-icon">◈</span><span>Награды</span></button>
+    <button class="nav-button" type="button" data-nav="manager"><span class="nav-icon">⌘</span><span>Управление</span></button>
+  </nav>
+
+  <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal"><span class="tag">Новая миссия</span><h2 id="modal-title" style="margin-top:9px">Собрать миссию гильдии</h2><p>В рабочей версии здесь менеджер задаёт название, условие, срок, опыт и награду. Для прототипа покажем ключевой сценарий без формы.</p><div class="modal-actions"><button class="button" id="modal-close" type="button">Закрыть</button><button class="button primary" id="modal-create" type="button">Создать черновик</button></div></div>
+  </div>
+  <div class="toast" role="status" aria-live="polite" id="toast"></div>
+
+  <script>
+    (() => {
+      const state = { tokens: 7, baseXp: 460, shiftDone: false };
+      const tg = window.Telegram?.WebApp;
+      const screens = [...document.querySelectorAll('.screen')];
+      const navButtons = [...document.querySelectorAll('[data-nav]')];
+      const toast = document.getElementById('toast');
+      let toastTimer;
+
+      function haptic(style = 'light') {
+        try { tg?.HapticFeedback?.impactOccurred?.(style); } catch { /* Telegram API is optional in a browser */ }
+      }
+
+      function syncTelegramBackButton(target) {
+        if (!tg?.BackButton) return;
+        if (target === 'today') tg.BackButton.hide();
+        else tg.BackButton.show();
+      }
+
+      function initialiseTelegram() {
+        if (!tg) return;
+        try {
+          tg.ready();
+          tg.expand();
+          tg.setHeaderColor?.('#000000');
+          tg.setBackgroundColor?.('#000000');
+          tg.setBottomBarColor?.('#000000');
+        } catch { /* The page remains usable outside Telegram and in older clients. */ }
+
+        document.documentElement.classList.add('telegram-mini-app');
+        const user = tg.initDataUnsafe?.user;
+        // This is display-only. A production backend must validate initData before using it for access or rewards.
+        if (user?.first_name) {
+          document.getElementById('today-title').textContent = user.first_name;
+          document.getElementById('avatar-initial').textContent = user.first_name.trim().charAt(0).toUpperCase() || 'B';
+        }
+        tg.BackButton?.onClick(() => navigate('today'));
+        syncTelegramBackButton('today');
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 3300);
+      }
+
+      function navigate(target) {
+        screens.forEach(screen => screen.classList.toggle('active', screen.id === target));
+        navButtons.forEach(button => button.classList.toggle('active', button.dataset.nav === target));
+        syncTelegramBackButton(target);
+        haptic('light');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      navButtons.forEach(button => button.addEventListener('click', () => navigate(button.dataset.nav)));
+      initialiseTelegram();
+
+      const checkboxes = [...document.querySelectorAll('#checklist input')];
+      const count = document.getElementById('check-count');
+      const checkMeter = document.getElementById('check-meter');
+      const completeShift = document.getElementById('complete-shift');
+      const missionProgress = document.getElementById('mission-progress');
+      const xpCurrent = document.getElementById('xp-current');
+      const xpMeter = document.getElementById('xp-meter');
+
+      function updateChecklist() {
+        const completed = checkboxes.filter(box => box.checked);
+        const earned = completed.reduce((sum, box) => sum + Number(box.dataset.xp), 0);
+        const total = checkboxes.length;
+        count.textContent = `${completed.length} из ${total}`;
+        missionProgress.textContent = `${completed.length}/${total}`;
+        checkMeter.style.width = `${completed.length / total * 100}%`;
+        xpCurrent.textContent = state.baseXp + earned;
+        xpMeter.style.width = `${Math.min(100, (state.baseXp + earned) / 650 * 100)}%`;
+        completeShift.disabled = completed.length !== total || state.shiftDone;
+        if (completed.length === total && !state.shiftDone) completeShift.textContent = 'Передать смену на проверку';
+      }
+      checkboxes.forEach(box => box.addEventListener('change', () => {
+        haptic('light');
+        updateChecklist();
+      }));
+      completeShift.addEventListener('click', () => {
+        state.shiftDone = true;
+        state.tokens += 1;
+        haptic('medium');
+        updateTokens();
+        completeShift.disabled = true;
+        completeShift.textContent = 'Смена отправлена менеджеру';
+        showToast('Смена передана на проверку. После подтверждения ты получишь +50 XP и печать гильдии.');
+      });
+
+      function updateTokens() {
+        document.getElementById('token-count').textContent = state.tokens;
+        document.getElementById('token-count-2').textContent = state.tokens;
+        document.querySelectorAll('.reward-button').forEach(button => {
+          const cost = Number(button.dataset.cost);
+          button.disabled = cost > state.tokens;
+          if (cost > state.tokens) button.textContent = `${cost} ✦`;
+          else if (cost === 5) button.textContent = 'Взять';
+          else button.textContent = `${cost} ✦`;
+        });
+      }
+      document.querySelectorAll('.reward-button').forEach(button => button.addEventListener('click', () => {
+        const cost = Number(button.dataset.cost);
+        if (cost > state.tokens) return;
+        state.tokens -= cost;
+        haptic('medium');
+        updateTokens();
+        showToast(`Награда «${button.dataset.reward}» забронирована. Покажи этот экран менеджеру.`);
+      }));
+
+      document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(item => item.classList.toggle('active', item === tab));
+        const filter = tab.dataset.filter;
+        document.querySelectorAll('#missions-list .mission-card').forEach(card => {
+          card.style.display = filter === 'all' || card.dataset.type === filter ? 'block' : 'none';
+        });
+      }));
+
+      document.querySelectorAll('.approve').forEach(button => button.addEventListener('click', () => {
+        const row = button.closest('.approval');
+        button.disabled = true;
+        button.textContent = 'Принято';
+        haptic('medium');
+        row.querySelector('small').textContent = 'Награда выдана · +50 XP';
+        showToast(`Смена «${row.dataset.approval}» подтверждена. Награды выданы.`);
+      }));
+
+      const escapeHtml = value => String(value).replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+      const formatDeadline = value => value ? `до ${new Date(`${value}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}` : 'без срока';
+      const increaseCounter = (id, amount = 1) => {
+        const counter = document.getElementById(id);
+        counter.textContent = String(Number(counter.textContent) + amount);
+      };
+
+      const adminTabs = [...document.querySelectorAll('.admin-tab')];
+      const adminPanels = [...document.querySelectorAll('.admin-panel')];
+      adminTabs.forEach(tab => tab.addEventListener('click', () => {
+        adminTabs.forEach(item => item.classList.toggle('active', item === tab));
+        adminPanels.forEach(panel => panel.classList.toggle('active', panel.id === tab.dataset.adminTarget));
+      }));
+
+      const missionForm = document.getElementById('mission-form');
+      missionForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(missionForm).entries());
+        const entry = document.createElement('article');
+        entry.className = 'admin-entry';
+        entry.innerHTML = `<span class="tag wine">${escapeHtml(data.type)}</span><h3>${escapeHtml(data.name)}</h3><p>${escapeHtml(data.description)}</p><div class="admin-meta">+${escapeHtml(data.xp)} XP · ${escapeHtml(data.seals)} печатей · ${formatDeadline(data.deadline)}</div>`;
+        document.getElementById('admin-missions-list').prepend(entry);
+        increaseCounter('admin-mission-count');
+        missionForm.reset();
+        document.getElementById('mission-xp').value = 50;
+        document.getElementById('mission-seals').value = 1;
+        showToast(`Миссия «${data.name}» создана и назначена гильдии.`);
+      });
+
+      const checklistItems = document.getElementById('checklist-items');
+      const emptyChecklistItems = () => '<input name="task" required placeholder="Первый пункт"><input name="task" required placeholder="Второй пункт">';
+      document.getElementById('add-check-item').addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.name = 'task';
+        input.required = true;
+        input.placeholder = 'Следующий пункт';
+        checklistItems.append(input);
+        input.focus();
+      });
+      const checklistForm = document.getElementById('checklist-form');
+      checklistForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(checklistForm).entries());
+        const tasks = [...checklistItems.querySelectorAll('[name="task"]')].map(input => input.value.trim()).filter(Boolean);
+        if (tasks.length === 0) return;
+        const entry = document.createElement('article');
+        entry.className = 'admin-entry';
+        entry.innerHTML = `<span class="tag">${escapeHtml(data.shift)}</span><h3>${escapeHtml(data.name)}</h3><ul class="admin-task-list">${tasks.map(task => `<li>${escapeHtml(task)}</li>`).join('')}</ul>`;
+        document.getElementById('admin-checklist-list').prepend(entry);
+        checklistForm.reset();
+        checklistItems.innerHTML = emptyChecklistItems();
+        showToast(`Чек-лист «${data.name}» сохранён.`);
+      });
+
+      const rewardForm = document.getElementById('reward-form');
+      rewardForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(rewardForm).entries());
+        const entry = document.createElement('article');
+        entry.className = 'admin-entry';
+        entry.innerHTML = `<span class="tag">${escapeHtml(data.category)}</span><h3>${escapeHtml(data.name)}</h3><p>${escapeHtml(data.description)}</p><div class="admin-meta">${escapeHtml(data.cost)} печатей</div>`;
+        document.getElementById('admin-reward-list').prepend(entry);
+        rewardForm.reset();
+        document.getElementById('reward-cost').value = 5;
+        showToast(`Награда «${data.name}» добавлена в витрину.`);
+      });
+
+      const grantForm = document.getElementById('grant-form');
+      grantForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(grantForm).entries());
+        const entry = document.createElement('article');
+        entry.className = 'admin-entry';
+        entry.innerHTML = `<h3>${escapeHtml(data.worker)} · +${escapeHtml(data.amount)} ${escapeHtml(data.kind)}</h3><p>Ручное начисление от бар-менеджера.</p><div class="admin-meta">Только что</div>`;
+        document.getElementById('grant-history').prepend(entry);
+        increaseCounter('admin-grant-count');
+        grantForm.reset();
+        document.getElementById('grant-amount').value = 25;
+        showToast(`Начисление для «${data.worker}» выполнено.`);
+      });
+
+      const approvals = document.getElementById('admin-approvals');
+      approvals.addEventListener('click', event => {
+        const button = event.target.closest('.admin-approve');
+        if (!button) return;
+        const row = button.closest('.admin-queue-row');
+        const worker = row.dataset.worker;
+        button.disabled = true;
+        button.textContent = 'Выдано';
+        row.querySelector('.caption').textContent = 'Подтверждено · +50 XP · 1 печать выдана';
+        document.getElementById('admin-awaiting-count').textContent = String(Math.max(0, Number(document.getElementById('admin-awaiting-count').textContent) - 1));
+        increaseCounter('admin-grant-count', 2);
+        haptic('medium');
+        showToast(`Смена «${worker}» принята. Награды начислены.`);
+      });
+
+      const modal = document.getElementById('modal');
+      document.getElementById('new-mission').addEventListener('click', () => modal.classList.add('show'));
+      document.getElementById('modal-close').addEventListener('click', () => modal.classList.remove('show'));
+      document.getElementById('modal-create').addEventListener('click', () => {
+        modal.classList.remove('show');
+        showToast('Черновик миссии создан. В следующей версии его можно будет заполнить и назначить команде.');
+      });
+      modal.addEventListener('click', event => { if (event.target === modal) modal.classList.remove('show'); });
+      document.addEventListener('keydown', event => { if (event.key === 'Escape') modal.classList.remove('show'); });
+      updateChecklist();
+      updateTokens();
+    })();
+  </script>
+</body>
+</html>
